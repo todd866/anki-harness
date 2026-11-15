@@ -145,6 +145,22 @@ here for whoever revisits it.
   observations, between which versions, and why they differ. A difference stays a finding
   until someone writes down what it is.
 
+## Checking a fix
+
+A version is just an environment named `env-<name>` under `ANKI_HARNESS_HOME`, so a build
+of your own works like a release. Build wheels from an Anki checkout (`./ninja wheels`),
+install them into a fresh environment, and compare it with the release it is based on:
+
+```sh
+uv venv --python 3.13 ~/.local/state/anki-harness/env-myfix
+uv pip install --python ~/.local/state/anki-harness/env-myfix/bin/python out/wheels/*.whl
+python3 run.py --versions 26.11b1,myfix --scenarios tag_expansion
+```
+
+A check tied to the issue the fix addresses should turn into `FIXED?`, and nothing else
+should change. Tried on 15 November 2026 with a fix for #5967: the rename check reported
+`FIXED?` on the fix build, and the checks for #5965 and #5966 stayed as they were.
+
 ## Writing a scenario
 
 - One scenario, one path a user takes.
