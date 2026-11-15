@@ -70,6 +70,12 @@ class Session:
         widget = target or self.mw
         QTest.keyClick(widget, key, modifier or Qt.KeyboardModifier.NoModifier)
 
+    def type(self, widget, text: str) -> None:
+        """Real key presses for each character of `text`, sent to `widget`."""
+        from PyQt6.QtTest import QTest
+
+        QTest.keyClicks(widget, text)
+
     def js(self, web, expression: str, into: str) -> None:
         """Evaluate in one of Anki's web views; the result lands in self.scratch[into]."""
         self.scratch.pop(into, None)
