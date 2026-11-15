@@ -52,6 +52,7 @@ Last run 15 November 2026, on 26.09.4 and 26.11 beta 1.
 | `io_small_mask_narrow_pane` | The same steps with a mask 1.5% of the image wide | the mask is kept | **the mask is deleted** |
 | `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) | same |
 | `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) | same |
+| `tag_expansion` | Expand a tag and its child, rename the parent; then add a note carrying a parent and child tag, expand the parent, undo and redo | the renamed subtree is collapsed ([#5967](https://github.com/ankitects/anki/issues/5967)); the redone tag is collapsed ([#5966](https://github.com/ankitects/anki/issues/5966)) | same |
 
 The issue numbers are bugs already reported to the Anki project by other people. They are
 here as calibration: a harness that cannot see a bug known to be present is not evidence of
