@@ -52,13 +52,16 @@ Last run 15 November 2026, on 26.09.4 and 26.11 beta 1.
 | `io_small_mask_default_browser` | The same steps with a mask 1.5% of the image wide | the mask is kept | **the mask is deleted** |
 | `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) | same |
 | `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) | same |
+| `search_corpus` | 43 searches over a fixed 17-note collection; nothing expected in advance, counts compared between versions | baseline | 27 searches agree, 16 differ (below) |
 | `tag_expansion` | Expand a tag and its child, rename the parent; then add a note carrying a parent and child tag, expand the parent, undo and redo | the renamed subtree is collapsed ([#5967](https://github.com/ankitects/anki/issues/5967)); the redone tag is collapsed ([#5966](https://github.com/ankitects/anki/issues/5966)) | same |
 
 The issue numbers are bugs already reported to the Anki project by other people. They are
 here as calibration: a harness that cannot see a bug known to be present is not evidence of
 anything. Each scenario is a self-contained reproduction.
 
-### The one difference between the versions
+### Differences between the versions
+
+**1. Small image-occlusion masks**
 
 When the editor saves an occlusion note it drops any shape under 5 px wide or high, measured
 on the canvas (`ts/routes/image-occlusion/shapes/to-cloze.ts`). The canvas takes its size
@@ -84,10 +87,36 @@ size the beta draws a 3:2 image 177 px high, so a mask under 2.8% of the image h
 That #5803 is the cause was checked directly: with its one rule (`min-width: 0` on
 `.top-toolbar-wrapper`) switched off in the beta, the image is 431 px again; with the rule
 added to 26.09.4, it is 265 px. #5803 does what it set out to do. The smaller canvas is a
-side effect that widens #3267. Seven runs of the two scenarios, the same result each time.
+side effect that widens #3267. The two scenarios gave the same result on every run (eight
+runs across the two pane sizes).
 
 Not tested here: the standalone image-occlusion page that the mobile apps use, and Windows
 or Linux.
+
+**2. Text searches that contain a comparator and a number**
+
+26.11 adds numeric field comparisons ([#4768](https://github.com/ankitects/anki/pull/4768)):
+`Frequency>500` finds notes whose Frequency field holds a number above 500. This is an
+intended, documented change, and the new searches work as described (five of the 16
+differences are those). The other side of it, also documented: a term made of text, then
+`<`, `>` or `=`, then a number is no longer a text search, and when no note type has a field
+of that name it matches nothing.
+
+| Search | Notes found, 26.09.4 | 26.11 beta 1 |
+|---|---|---|
+| `p=0.05`, `K=3.5`, `pH=7.4`, `n=1`, `x=5` | 1 each | 0 |
+| `"p=0.05"` (in quotes) | 1 | 0 |
+| `CD4<200` | 2 | 0 |
+| `BMI>30` | 1 | 0 |
+| `p\=0.05` (escaped, the documented way) | error | 1 |
+| `x=5*`, `"x=5 and"`, `E=mc2`, `a=b`, `<b>`, `=5` | 1 each | 1 each |
+
+Quotes do not make the term literal; only the backslash does. On a 90,000-note medical
+collection, 34 distinct expressions of this unspaced form occur in note text (23 clinical
+thresholds such as `CD4<100` and `pH<7.3`, 11 URL parameters such as `curid=5038419`).
+Searching for each verbatim finds notes for 27 of them on 26.09.4 and for none on the beta.
+The maintainers weighed this when merging and chose to document the escape; the numbers are
+here for whoever revisits it.
 
 ## How it works
 
