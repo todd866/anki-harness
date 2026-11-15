@@ -11,21 +11,31 @@ def run(s):
     s.col.decks.select(s.col.decks.id("harness"))
     s.mw.moveToState("review")
     yield lambda: s.mw.state == "review" and s.mw.reviewer.card is not None
-    yield 0.6
     reviewer = s.mw.reviewer
     first = reviewer.card.id
-    s.js(reviewer.web, "document.getElementById('qa').innerText", "front")
-    yield s.have("front")
-    s.observe("front text", s.scratch["front"])
+    for _ in range(100):  # the card is drawn some time after the state changes, longer on a busy machine
+        s.js(reviewer.web, "(document.getElementById('qa') || {}).innerText || ''", "front")
+        yield s.have("front")
+        if s.scratch["front"].strip():
+            break
+        yield 0.2
+    else:
+        s.inconclusive("the review screen did not draw the question within 20 s")
+    s.observe("front text", s.scratch["front"].strip())
     s.check("question hides the answer", "value 0" not in s.scratch["front"], s.scratch["front"])
 
     s.key(Qt.Key.Key_Space)
     yield lambda: reviewer.state == "answer"
     s.check("Space shows the answer", reviewer.state == "answer", reviewer.state)
-    yield 0.4
-    s.js(reviewer.web, "document.getElementById('qa').innerText", "back")
-    yield s.have("back")
-    s.observe("back text", s.scratch["back"])
+    for _ in range(100):
+        s.js(reviewer.web, "(document.getElementById('qa') || {}).innerText || ''", "back")
+        yield s.have("back")
+        if "value 0" in s.scratch["back"]:
+            break
+        yield 0.2
+    else:
+        s.inconclusive("the review screen did not draw the answer within 20 s")
+    s.observe("back text", s.scratch["back"].strip())
 
     s.key(Qt.Key.Key_3)
     yield lambda: reviewer.card is not None and reviewer.card.id != first

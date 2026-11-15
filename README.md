@@ -39,6 +39,7 @@ What it prints:
 | `known #N still present` | A check tied to an open Anki issue still fails. Expected |
 | `FIXED?` | A check tied to an open Anki issue now passes |
 | `inconclusive` | The scenario's own control failed three times running. Nothing is concluded |
+| `explained (n)` | Differences someone has read and accounted for in `triage.json`, such as an intended change. Counted apart from findings |
 
 ## What it covers
 
@@ -52,6 +53,7 @@ Last run 15 November 2026, on 26.09.4 and 26.11 beta 1.
 | `io_small_mask_default_browser` | The same steps with a mask 1.5% of the image wide | the mask is kept | **the mask is deleted** |
 | `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) | same |
 | `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) | same |
+| `cloze_render_corpus` | 40 awkward cloze texts (nested, malformed, MathJax, LaTeX); card counts and rendered question and answer compared between versions | baseline | 37 texts render identically; 3 differ, all the intended MathJax fix ([#4612](https://github.com/ankitects/anki/pull/4612)) |
 | `search_corpus` | 43 searches over a fixed 17-note collection; nothing expected in advance, counts compared between versions | baseline | 27 searches agree, 16 differ (below) |
 | `tag_expansion` | Expand a tag and its child, rename the parent; then add a note carrying a parent and child tag, expand the parent, undo and redo | the renamed subtree is collapsed ([#5967](https://github.com/ankitects/anki/issues/5967)); the redone tag is collapsed ([#5966](https://github.com/ankitects/anki/issues/5966)) | same |
 
@@ -134,6 +136,9 @@ here for whoever revisits it.
 - Every web view is also reachable over the Chrome DevTools protocol
   (`HARNESS_CDP_PORT`), for Playwright or any other client. No scenario needs it yet.
 - `run.py` runs the matrix and prints the table.
+- `triage.json` is the record of differences that have been read: which scenario, which
+  observations, between which versions, and why they differ. A difference stays a finding
+  until someone writes down what it is.
 
 ## Writing a scenario
 
@@ -159,6 +164,9 @@ source, Linux and Windows, and a scheduled run in CI.
 - Anki 25.09 needs `QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu` offscreen (the default here).
   Its number keys do not grade under the harness; unexplained, and not pursued on an old
   version.
+- On 26.09.4 the review screen occasionally takes more than 20 seconds to draw its first card
+  when that version is the first process of a run. The scenario reports itself inconclusive
+  and passes on the retry. Not explained.
 - Written with AI assistance (Claude). Every scenario is run against the released Anki
   builds it names before it is committed.
 

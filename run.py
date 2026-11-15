@@ -16,10 +16,13 @@ What it reports:
   FIXED?   a check tied to an open upstream issue now passes: worth telling the maintainers
   inconclusive  a scenario's own control failed three times running: the harness could not
            drive Anki, so nothing is concluded
+  explained  a difference someone has read and accounted for in triage.json (an intended
+           change, say). Shown as a count, not as a finding
 """
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -68,6 +71,14 @@ def main() -> int:
                     break
             results[(scenario, version)] = result
 
+    triage = json.load(open(os.path.join(HERE, "triage.json")))
+
+    def explanation(scenario: str, name: str, ran: list) -> str:
+        for entry in triage:
+            if entry["scenario"] == scenario and set(ran) == set(entry["between"]) and re.search(entry["match"], name):
+                return entry["why"]
+        return ""
+
     findings = 0
     for scenario in scenarios:
         print(f"\n== {scenario}")
@@ -90,16 +101,23 @@ def main() -> int:
                     findings += 1
                     print(f"      FAIL  {check['name']}: {check['detail']}")
         names: list = []
+        explained: dict = {}
         ran = [v for v in versions if per[v]["status"] == "ran"]
         for result in per.values():
             names += [n for n in result["observations"] if n not in names]
         for name in names:
             values = {v: json.dumps(per[v]["observations"].get(name, "<absent>"), sort_keys=True, default=str) for v in ran}
             if len(set(values.values())) > 1:
+                why = explanation(scenario, name, ran)
+                if why:
+                    explained[why] = explained.get(why, 0) + 1
+                    continue
                 findings += 1
                 print(f"      DIFFERS  {name}")
                 for version, value in values.items():
                     print(f"          {version:9} {value[:160]}")
+        for why, count in explained.items():
+            print(f"      explained ({count})  {why}")
     print(f"\n{findings} finding(s) · {run_dir}")
     json.dump({f"{s}|{v}": r for (s, v), r in results.items()}, open(os.path.join(run_dir, "summary.json"), "w"), indent=1, default=str)
     return 1 if findings else 0

@@ -1,0 +1,47 @@
+[
+ {
+  "scenario": "search_corpus",
+  "between": [
+   "26.9.4",
+   "26.11b1"
+  ],
+  "match": "^search  [Ff]requency",
+  "why": "intended: numeric field comparisons, new in 26.11 (#4768)"
+ },
+ {
+  "scenario": "search_corpus",
+  "between": [
+   "26.9.4",
+   "26.11b1"
+  ],
+  "match": "^search  [xp]\\\\=",
+  "why": "intended: 26.11 adds a backslash escape for comparators (#4768)"
+ },
+ {
+  "scenario": "search_corpus",
+  "between": [
+   "26.9.4",
+   "26.11b1"
+  ],
+  "match": "^search  \\\"?(p=0\\.05|K=3\\.5|pH=7\\.4|n=1|x=5|CD4<200|BMI>30)\\\"?$",
+  "why": "documented consequence of #4768: text, comparator, number is now a field comparison and matches nothing without the escape (see README)"
+ },
+ {
+  "scenario": "cloze_render_corpus",
+  "between": [
+   "26.9.4",
+   "26.11b1"
+  ],
+  "match": "^(26|28|31) ",
+  "why": "intended: }} inside MathJax no longer closes the cloze (#4612)"
+ },
+ {
+  "scenario": "io_thin_mask_default_browser",
+  "between": [
+   "26.9.4",
+   "26.11b1"
+  ],
+  "match": "image width on the canvas",
+  "why": "the mask editor's canvas shrinks with the pane since #5803 (see README; reported on #3267)"
+ }
+]
