@@ -1,4 +1,4 @@
-"""Shared body for the narrow-pane image-occlusion scenarios (not a scenario itself).
+"""Shared body for the small-mask image-occlusion scenarios (not a scenario itself).
 
 Upstream #3267 reports masks disappearing after an occlusion note is edited. The editor
 drops any shape under 5 px when it saves, and it measures in canvas pixels. The canvas is
@@ -6,7 +6,8 @@ sized to the editor pane when the mask editor mounts, so a mask that clears 5 px
 window can fall under it when the same note is opened in a narrow pane.
 
 The control comes first: in a wide window, moving the other mask and saving keeps both.
-Then the note is reopened in a narrow pane and the same edit is made.
+Then the browser is put back to the size it opens at in a new profile (750 x 493, editor pane
+312 px wide), the note is reopened, and the same edit is made.
 """
 import json
 import re
@@ -23,6 +24,9 @@ CANVAS = """(() => { const c = globalThis.canvas; if (!c || !c.getObjects) retur
   const box = c.getObjects().find(o => o.id === 'boundingBox');
   return JSON.stringify({masks, image: box ? Math.round(box.width * box.scaleX) : null}); })()"""
 DRAG_PX = 20
+# What a new profile's browser opens at (measured on 26.09.4 and 26.11b1).
+DEFAULT_BROWSER = (750, 493)
+DEFAULT_SPLITTER = [152, 312]
 
 
 def mask_count(field: str) -> int:
@@ -98,11 +102,11 @@ def run_with(s, thin: float, known: str = ""):
     if mask_count(field()) != 2:
         return
 
-    # The case: the same edit with the note opened in a narrow editor pane. The canvas is sized
-    # when the mask editor mounts, so narrow the pane first and then load the note afresh.
-    splitter = browser.form.splitter
-    total = sum(splitter.sizes())
-    splitter.setSizes([total - 260, 260])
+    # The case: the same edit at the browser's default size. The canvas is sized when the mask
+    # editor mounts, so resize first and then load the note afresh.
+    browser.resize(*DEFAULT_BROWSER)
+    yield 0.3
+    browser.form.splitter.setSizes(DEFAULT_SPLITTER)
     browser.search_for("nid:1")  # no such note: empties the editor
     yield 0.8
     browser.search_for(f"nid:{nid}")
@@ -113,13 +117,13 @@ def run_with(s, thin: float, known: str = ""):
     s.observe("editor pane width", web.width())
     narrow = yield from settled()
     if not narrow or len(narrow["masks"]) != 2:
-        s.inconclusive(f"mask editor did not show both masks after narrowing: {narrow}")
-    s.observe("narrow pane: image width on the canvas, thin mask width (canvas px)", [narrow["image"], narrow["masks"][1]["canvasW"]])
+        s.inconclusive(f"mask editor did not show both masks at the default size: {narrow}")
+    s.observe("default browser: image width on the canvas, small mask width (canvas px)", [narrow["image"], narrow["masks"][1]["canvasW"]])
     if not (yield from drag_wide_mask()):
-        s.inconclusive("mouse input did not move a mask in the narrow pane")
+        s.inconclusive("mouse input did not move a mask at the default browser size")
     yield 1.0
     yield from save()
-    s.observe("masks after the same edit in a narrow pane", mask_count(field()))
+    s.observe("masks after the same edit at the default browser size", mask_count(field()))
     s.observe("cards before and after", [cards_at_start, len(s.col.find_cards(f"nid:{nid}"))])
-    s.check("a small mask survives an edit made in a narrow pane", mask_count(field()) == 2, f"the note had 2 masks and now has {mask_count(field())} after another mask was moved", known=known)
+    s.check("a small mask survives an edit made at the default browser size", mask_count(field()) == 2, f"the note had 2 masks and now has {mask_count(field())} after another mask was moved", known=known)
     browser.grab().save(s.out_dir + "/browser.png")

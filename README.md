@@ -48,8 +48,8 @@ Last run 15 November 2026, on 26.09.4 and 26.11 beta 1.
 |---|---|---|---|
 | `review_keys` | Review with real key presses: Space shows the answer, a number grades, Undo puts the card back | passes | passes |
 | `io_multiselect_move` | Image occlusion in the browser's editor, with real mouse drags: move one mask (the control), then two selected together | the multi-selection move is not saved ([#4223](https://github.com/ankitects/anki/issues/4223)) | same |
-| `io_thin_mask_narrow_pane` | An occlusion note with one mask 1% of the image wide. Move the other mask in a wide window (the control), then again with the note opened in a 260 px editor pane | the thin mask is deleted from the note in the narrow pane ([#3267](https://github.com/ankitects/anki/issues/3267)) | same |
-| `io_small_mask_narrow_pane` | The same steps with a mask 1.5% of the image wide | the mask is kept | **the mask is deleted** |
+| `io_thin_mask_default_browser` | An occlusion note with one mask 1% of the image wide. Move the other mask in a wide window (the control), then again with the browser at the size it opens at in a new profile | the thin mask is deleted from the note ([#3267](https://github.com/ankitects/anki/issues/3267)) | same |
+| `io_small_mask_default_browser` | The same steps with a mask 1.5% of the image wide | the mask is kept | **the mask is deleted** |
 | `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) | same |
 | `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) | same |
 | `tag_expansion` | Expand a tag and its child, rename the parent; then add a note carrying a parent and child tag, expand the parent, undo and redo | the renamed subtree is collapsed ([#5967](https://github.com/ankitects/anki/issues/5967)); the redone tag is collapsed ([#5966](https://github.com/ankitects/anki/issues/5966)) | same |
@@ -62,18 +62,32 @@ anything. Each scenario is a self-contained reproduction.
 
 When the editor saves an occlusion note it drops any shape under 5 px wide or high, measured
 on the canvas (`ts/routes/image-occlusion/shapes/to-cloze.ts`). The canvas takes its size
-from the editor pane when the mask editor mounts. So an existing mask can fall under 5 px
-simply because the note was opened in a narrow pane, and it is then removed from the note
-the next time anything is edited, without a message.
+from the editor pane when the mask editor mounts (`containerSize()` in `mask-editor.ts`). So
+an existing mask can fall under 5 px simply because of the size of the pane the note was
+opened in, and it is then removed from the note the next time anything is edited, without a
+message.
 
-In a 260 px pane, 26.09.4 draws the test image 431 px wide and 26.11 beta 1 draws it 213 px
-wide, so the beta deletes masks about twice as large: up to 2.3% of the image width, against
-1.2%. The only functional change to the mask editor between the two tags is
-[#5803](https://github.com/ankitects/anki/pull/5803), which lets the mask editor's column
-shrink to the window so the toolbar can scroll again. That change does what it says; the
-smaller canvas is a side effect that widens #3267. Four runs, the same result each time.
+In the browser, 26.09.4 never draws the image narrower than 431 px, because the toolbar's
+row of buttons holds the mask editor's column open. 26.11 beta 1 lets that column shrink
+([#5803](https://github.com/ankitects/anki/pull/5803), so the toolbar can scroll again), and
+the canvas shrinks with it:
 
-Not tested here: the standalone image-occlusion page that the mobile apps use.
+| Browser | Editor pane | Image on the canvas, 26.09.4 | 26.11 beta 1 | Narrowest mask kept, 26.09.4 | 26.11 beta 1 |
+|---|---|---|---|---|---|
+| Default size in a new profile (750 x 493) | 312 px | 431 px | 265 px | 1.2% of the image width | 1.9% |
+| Pane dragged to 260 px | 260 px | 431 px | 213 px | 1.2% | 2.3% |
+| Wide window (1500 px) | wide | 593 px | 593 px | 0.8% | 0.8% |
+
+The same limit applies to height, where it bites harder on a landscape image: at the default
+size the beta draws a 3:2 image 177 px high, so a mask under 2.8% of the image height goes.
+
+That #5803 is the cause was checked directly: with its one rule (`min-width: 0` on
+`.top-toolbar-wrapper`) switched off in the beta, the image is 431 px again; with the rule
+added to 26.09.4, it is 265 px. #5803 does what it set out to do. The smaller canvas is a
+side effect that widens #3267. Seven runs of the two scenarios, the same result each time.
+
+Not tested here: the standalone image-occlusion page that the mobile apps use, and Windows
+or Linux.
 
 ## How it works
 
