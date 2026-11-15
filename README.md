@@ -54,6 +54,7 @@ Last run 15 November 2026, on 26.09.4 and 26.11 beta 1.
 | `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) | same |
 | `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) | same |
 | `cloze_render_corpus` | 40 awkward cloze texts (nested, malformed, MathJax, LaTeX); card counts and rendered question and answer compared between versions | baseline | 37 texts render identically; 3 differ, all the intended MathJax fix ([#4612](https://github.com/ankitects/anki/pull/4612)) |
+| `type_answer_corpus` | 30 expected and typed pairs (case, accents, spacing, HTML, other scripts) through the type-in-the-answer comparison | baseline | all 30 identical; the rework for the new case-insensitive modifier ([#5264](https://github.com/ankitects/anki/pull/5264)) leaves the default comparison unchanged |
 | `search_corpus` | 43 searches over a fixed 17-note collection; nothing expected in advance, counts compared between versions | baseline | 27 searches agree, 16 differ (below) |
 | `tag_expansion` | Expand a tag and its child, rename the parent; then add a note carrying a parent and child tag, expand the parent, undo and redo | the renamed subtree is collapsed ([#5967](https://github.com/ankitects/anki/issues/5967)); the redone tag is collapsed ([#5966](https://github.com/ankitects/anki/issues/5966)) | same |
 
