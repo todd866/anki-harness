@@ -43,5 +43,14 @@
   ],
   "match": "image width on the canvas",
   "why": "the mask editor's canvas shrinks with the pane since #5803 (see README; reported on #3267)"
+ },
+ {
+  "scenario": "media_names_corpus",
+  "between": [
+   "26.9.4",
+   "26.11b1"
+  ],
+  "match": "^03 add 'Image\\.png'",
+  "why": "intended: adding a file that already exists under another letter case now returns the name on disk (#5683)"
  }
 ]
