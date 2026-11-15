@@ -42,18 +42,37 @@ What it prints:
 
 ## What it covers
 
-Last run 15 November 2026, on 26.09.4 and 26.11 beta 1. Both versions gave the same results.
+Last run 15 November 2026, on 26.09.4 and 26.11 beta 1.
 
-| Scenario | What it drives | Result |
-|---|---|---|
-| `review_keys` | Review with real key presses: Space shows the answer, a number grades, Undo puts the card back | passes |
-| `io_multiselect_move` | Image occlusion in the browser's editor, with real mouse drags: move one mask (the control), then two selected together | the single move is saved; the multi-selection move is not ([#4223](https://github.com/ankitects/anki/issues/4223)) |
-| `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) |
-| `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) |
+| Scenario | What it drives | 26.09.4 | 26.11 beta 1 |
+|---|---|---|---|
+| `review_keys` | Review with real key presses: Space shows the answer, a number grades, Undo puts the card back | passes | passes |
+| `io_multiselect_move` | Image occlusion in the browser's editor, with real mouse drags: move one mask (the control), then two selected together | the multi-selection move is not saved ([#4223](https://github.com/ankitects/anki/issues/4223)) | same |
+| `io_thin_mask_narrow_pane` | An occlusion note with one mask 1% of the image wide. Move the other mask in a wide window (the control), then again with the note opened in a 260 px editor pane | the thin mask is deleted from the note in the narrow pane ([#3267](https://github.com/ankitects/anki/issues/3267)) | same |
+| `io_small_mask_narrow_pane` | The same steps with a mask 1.5% of the image wide | the mask is kept | **the mask is deleted** |
+| `overview_keys_undo` | Press R on an ordinary deck's overview after an undoable change | undo history is emptied ([#4311](https://github.com/ankitects/anki/issues/4311)) | same |
+| `tag_redo` | Undo, then expand a tag | the pending redo is discarded ([#5965](https://github.com/ankitects/anki/issues/5965)) | same |
 
-The three issue numbers are bugs already reported to the Anki project by other people. They
-are here as calibration: a harness that cannot see a bug known to be present is not evidence
-of anything. Each scenario is a self-contained reproduction.
+The issue numbers are bugs already reported to the Anki project by other people. They are
+here as calibration: a harness that cannot see a bug known to be present is not evidence of
+anything. Each scenario is a self-contained reproduction.
+
+### The one difference between the versions
+
+When the editor saves an occlusion note it drops any shape under 5 px wide or high, measured
+on the canvas (`ts/routes/image-occlusion/shapes/to-cloze.ts`). The canvas takes its size
+from the editor pane when the mask editor mounts. So an existing mask can fall under 5 px
+simply because the note was opened in a narrow pane, and it is then removed from the note
+the next time anything is edited, without a message.
+
+In a 260 px pane, 26.09.4 draws the test image 431 px wide and 26.11 beta 1 draws it 213 px
+wide, so the beta deletes masks about twice as large: up to 2.3% of the image width, against
+1.2%. The only functional change to the mask editor between the two tags is
+[#5803](https://github.com/ankitects/anki/pull/5803), which lets the mask editor's column
+shrink to the window so the toolbar can scroll again. That change does what it says; the
+smaller canvas is a side effect that widens #3267. Four runs, the same result each time.
+
+Not tested here: the standalone image-occlusion page that the mobile apps use.
 
 ## How it works
 
